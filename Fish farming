@@ -1,0 +1,147 @@
+/*************************************************************
+
+/* Comment this out to disable prints and save space */
+#define BLYNK_PRINT DebugSerial
+
+
+// You could use a spare Hardware Serial on boards that have it (like Mega)
+#include <SoftwareSerial.h>
+SoftwareSerial DebugSerial(2, 3),phSerial(13,12); // RX, TX
+
+#include <BlynkSimpleStream.h>
+char auth[] = "seDZEX8y1e4nqkXjGdyIW8JadHVG8epy";
+//char auth[]="H2ajExldKt1umhBDhToljgeQePp_ojem";
+int motor[]={8,7,6,5};
+int temp_pin=A0;
+int ldr_pin=2;
+int mois_pin=A1;
+void setup()
+{
+  DebugSerial.begin(9600);
+  Serial.begin(9600);
+  Blynk.begin(Serial, auth);
+  for(int i=0;i<4;i++){
+    pinMode(motor[i],OUTPUT);
+  }
+  phSerial.begin(9600);
+}
+
+void loop()
+{
+  Blynk.run();
+  getPH();
+  getTemp();
+  LDRStatus();
+  moistureLevel();
+}
+
+void getPH(){
+    if(phSerial.available()){
+      String data=phSerial.readStringUntil(':');
+      if(data != ""){
+        String ph=phSerial.readStringUntil('$');
+        float val=ph.toFloat();
+        Blynk.virtualWrite(V13,val);  
+        if(val<9&&val>6){
+          Blynk.virtualWrite(V14,"....");    
+        }else{
+          Blynk.virtualWrite(V14,"warning!!");    
+        }
+      }
+      
+    }
+}
+
+void getTemp(){
+  int val=analogRead(temp_pin);
+  float temp=val*4.88;
+  temp=temp/10;
+  //Serial.print("Temp: ");
+  //Serial.println(val);
+  Blynk.virtualWrite(V12,temp);
+  if(temp>30){
+    Blynk.virtualWrite(V15,"warning!!");  
+  }else{
+    Blynk.virtualWrite(V15,"........");  
+  }
+}
+
+void LDRStatus(){
+  if(digitalRead(ldr_pin)==LOW){
+    //Serial.println("Light");
+    Blynk.virtualWrite(V11,"Light");
+  }else{
+    //Serial.println(".....");
+    Blynk.virtualWrite(V11,"....");
+  }
+}
+
+void moistureLevel(){
+  int val=digitalRead(mois_pin);
+  //val=map(val,1023,0,0,1023);
+//  Serial.print("Moisture: ");
+//  Serial.println(val);
+  Blynk.virtualWrite(V10,val);
+  if(val){
+    Blynk.virtualWrite(V16,"....");  
+  }else{
+    Blynk.virtualWrite(V16,"warning!!");  
+  }
+}
+
+BLYNK_WRITE(V8){
+  int val=param.asInt();
+  if(val){
+    Blynk.virtualWrite(V20,"On");
+    digitalWrite(motor[3],HIGH);
+  }else{
+    Blynk.virtualWrite(V20,"....");
+    digitalWrite(motor[3],LOW);
+  }
+}
+
+
+BLYNK_WRITE(V7){
+  int val=param.asInt();
+  if(val){
+    Blynk.virtualWrite(V21,"On");
+    digitalWrite(motor[2],HIGH);
+  }else{
+    Blynk.virtualWrite(V21,"....");
+    digitalWrite(motor[2],LOW);
+  }
+}
+
+
+BLYNK_WRITE(V6){
+  int val=param.asInt();
+  if(val){
+    Blynk.virtualWrite(V22,"On");
+    digitalWrite(motor[1],HIGH);
+  }else{
+    Blynk.virtualWrite(V22,"....");
+    digitalWrite(motor[1],LOW);
+  }
+}
+
+
+BLYNK_WRITE(V5){
+  int val=param.asInt();
+  if(val){
+    Blynk.virtualWrite(V23,"On");
+    digitalWrite(motor[0],HIGH);
+  }else{
+    Blynk.virtualWrite(V23,"....");
+    digitalWrite(motor[0],LOW);
+  }
+}
+
+
+BLYNK_WRITE(V4){
+  int val=param.asInt();
+  if(val){
+    Blynk.virtualWrite(V22,"On");
+  }else{
+    Blynk.virtualWrite(V22,"....");
+  }
+}
